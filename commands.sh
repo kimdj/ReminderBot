@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tbot ~ Subroutines/Commands
+# _reminderbot ~ Subroutines/Commands
 # Copyright (c) 2017 David Kim
 # This program is licensed under the "MIT License".
 # Date of inception: 1/14/17
@@ -11,7 +11,7 @@ IFS=''                  # internal field separator; variable which defines the c
                         # (i.e. space, tab, newline)
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BOT_NICK="$(grep -P "BOT_NICK=.*" ${DIR}/tbot.sh | cut -d '=' -f 2- | tr -d '"')"
+BOT_NICK="$(grep -P "BOT_NICK=.*" ${DIR}/_reminderbot.sh | cut -d '=' -f 2- | tr -d '"')"
 
 if [ "${chan}" = "${BOT_NICK}" ] ; then chan="${nick}" ; fi
 
@@ -34,57 +34,51 @@ function send {
     done <<< "${1}"
 }
 
-function allChannelSubroutine {
-    send "list"                               # Send an internal IRC command.
-                                              # In tbot.sh, the response will be logged in irc-output.log.
-    say tbot "!signal_allchan ${1}"        # Send a signal msg to self, which will cause irc-output.log
-                                                      # to be parsed for user information and sent back to the user.
-}
+# Add a cronjob.
 
-function channelSubroutine {      # channelSubroutine _sharp MattDaemon  -OR-  channelSubroutine #bingobobby MattDaemon p
-    nick_chan=${1}
-    target=${2}
-    send "whois ${target}"                        # Send an internal IRC command.
-                                                # In tbot.sh, the response will be logged in irc-output.log.
-    if [ ${3} ] ; then
-        say tbot "!signal ${nick_chan} ${target} p"    # Send a signal msg to self, which will cause irc-output.log
-                                                # to be parsed for user information and sent back to the user.
-    else
-        say tbot "!signal ${nick_chan} ${target}"
+function cronjobSubroutine {
+    payload=${1}
+    days=$(echo ${payload} | sed -r 's/([0-9]*d)([0-9]*h)([0-9]*m).*/\1/')
+    hours=$(echo ${payload} | sed -r 's/([0-9]*d)([0-9]*h)([0-9]*m).*/\2/')
+    minutes=$(echo ${payload} | sed -r 's/([0-9]*d)([0-9]*h)([0-9]*m).*/\3/')
+    task=$(echo ${payload} | sed -r 's/([0-9]*d)([0-9]*h)([0-9]*m)//' | sed 's/^[ ]*//' | sed 's/[ ]*$//')
+    # say ${chan} "${days} ${hours} ${minutes}"
+    # say ${chan} "${task}"
+
+    if [ ! ${days} ] && [ ! ${hours} ] && [ ! ${minutes} ] || [ $(echo ${days}${hours}${minutes} | sed 's/[ 0-9dhm]*//') ]; then
+        say ${chan} "Sorry, I couldn't setup your reminder"
+        return 1
     fi
+
+    if [ ! ${days} ] ; then days='0d' ; fi
+    if [ ! ${hours} ] ; then hours='0h' ; fi
+    if [ ! ${minutes} ] ; then minutes='0m' ; fi
+
+    ce_time=$(date +%s)                                                     # current epoch time
+    days=$(echo ${days} | sed -r 's/d//')
+    hours=$(echo ${hours} | sed -r 's/h//')
+    minutes=$(echo ${minutes} | sed -r 's/m//')
+    e_time=$(( ${days}*24*60*60 + ${hours}*60*60 + ${minutes}*60 + ${ce_time} ))         # convert #d#h#m ==> epoch time
+                                                                            # (d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60)
+
+    s_time=$(date -d @${e_time} +%M%H%d%m)                                            # convert epoch time ==> standard time
+    min=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1/')
+    hour=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\2/')
+    day=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\3/')
+    month=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\4/')
+    say ${chan} "${nick}: You will be reminded @ $(date -d @${e_time})"
+    uuid=$(uuidgen)
+    (crontab -l ; echo "${min} ${hour} ${day} ${month} * echo ${uuid}: $(date), ${chan}, ${task} >> /home/dkim/sandbox/_reminderbot/tasks/tmp") | crontab -
+
+    # min hour day month day-of-week
 }
 
-# This subroutine displays documentation for tbot's functionalities.
+# This subroutine displays documentation for _reminderbot's functionalities.
 
 function helpSubroutine {
-    # say ${chan} "I am a test bot; nothing to see here. Move along."
-    say ${chan} 'usage: !channels [-p | --privmsg][$NICK]'
-}
-
-# This subroutine handles incoming signals from tbot.
-
-function signalSubroutine {
-    arg1=$(echo ${msg} | cut -d ' ' -f 1)
-    nick_chan=$(echo ${msg} | cut -d ' ' -f 2)
-    target=$(echo ${msg} | cut -d ' ' -f 3)
-
-    if [[ ! ${arg1} == '!signal_allchan' ]] ; then
-        if [ $(cat irc-output.log | grep 'No such nick/channel') ] ; then           # Case: $NICK not found
-            say ${nick_chan} "No such nick/channel"
-        else                                                                        # Case: whois $NICK
-            nick=$(tac irc-output.log | grep -n '319' | head -n 1 | sed 's|[^#]*tbot \(.*\) :\(.*\)|\1|')
-            channels="$(tac irc-output.log | grep -n '319' | head -n 1 | sed 's|[^#]*tbot \(.*\) :\(.*\)|\2|')"
-            say ${nick_chan} "${nick} is currently in: ${channels}"
-        fi
-    else                                                                            # Case: list all channels
-        channels="$(cat irc-output.log | grep 322 | sed 's|^==>.*322 tbot ||g' | sed 's| :.*||g' | tr '\n' ' ' | sed 's| \([0-9]*\) |\(\1\) |g' | fold -s -w448)"
-
-        while read -r line; do
-            say ${nick_chan} "${line}"
-        done <<< "${channels}"
-    fi
-
-    rm irc-output.log
+    say ${chan} "${nick}: I will remind you of stuff! READ: I am not liable for your forgetfulness."
+    say ${chan} 'usage: "remind me in #d#h#m ..." such as 3d4h6m for 3 days, 4 hours, 6 minutes'
+    # say ${chan} 'usage: remind me in #d#h#m ...'
 }
 
 ################################################  Subroutines End  ################################################
@@ -97,60 +91,61 @@ function signalSubroutine {
 
 # Help Command.
 
-if has "${msg}" "^!tbot$" || has "${msg}" "^tbot: help$" ; then
+if has "${msg}" "^!_reminderbot$" || has "${msg}" "^_reminderbot: help$" ; then
     helpSubroutine
 
 # Alive.
 
-elif has "${msg}" "^!alive(\?)?$" || has "${msg}" "^tbot: alive(\?)?$" ; then
+elif has "${msg}" "^!alive(\?)?$" || has "${msg}" "^_reminderbot: alive(\?)?$" ; then
     say ${chan} "running!"
 
 # Source.
 
-elif has "${msg}" "^tbot: source$" ; then
-    say ${chan} "Try -> https://github.com/kimdj/tbot -OR- /u/dkim/tbot"
+elif has "${msg}" "^_reminderbot: source$" ; then
+    say ${chan} "Try -> https://github.com/kimdj/_reminderbot -OR- /u/dkim/_reminderbot"
 
-# Get the list of all channels. [A]
+# Add a cronjob.
 
-elif has "${msg}" "^!channels$" ; then
-    allChannelSubroutine ${chan}
+elif has "${msg}" "^remind me in " ; then
+    payload=$(echo ${msg} | sed -r 's/^remind me in //')
+    cronjobSubroutine "${payload}"
 
-# Get the list of all channels. [A]
+# # Get the list of all channels. [A]
 
-elif has "${msg}" "^!channels -p$" || has "${msg}" "^!channels --privmsg$" ; then
-    allChannelSubroutine ${nick}
+# elif has "${msg}" "^!channels -p$" || has "${msg}" "^!channels --privmsg$" ; then
+#     allChannelSubroutine ${nick}
 
-# Handle incoming msg from self (tbot => tbot).
+# # Handle incoming msg from self (_reminderbot => _reminderbot).
 
-elif has "${msg}" "^!signal_allchan " && [[ ${nick} = "tbot" ]] ; then
-    signalSubroutine ${msg}
+# elif has "${msg}" "^!signal_allchan " && [[ ${nick} = "_reminderbot" ]] ; then
+#     signalSubroutine ${msg}
 
-# Get a nick's channels (nick/chan => tbot).
+# # Get a nick's channels (nick/chan => _reminderbot).
 
-elif has "${msg}" "^!channels " ; then                    # !channels MattDaemon  -OR-  !channels -p MattDaemon
-    target=$(echo ${msg} | sed -r 's/^!channels //')         # MattDaemon  -OR-  -p MattDaemon
-    if [[ ${target} == *-p* ]] || [[ ${target} == *--privmsg* ]] ; then
-        target=$(echo ${target} | sed -r 's/ *--privmsg//' | sed -r 's/ *-p//' | xargs)
-        channelSubroutine ${nick} ${target} 'p'              # channelSubroutine _sharp MattDaemon p
-    else
-        channelSubroutine ${chan} ${target}                  # channelSubroutine #bingobobby MattDaemon
-    fi
+# elif has "${msg}" "^!channels " ; then                    # !channels MattDaemon  -OR-  !channels -p MattDaemon
+#     target=$(echo ${msg} | sed -r 's/^!channels //')         # MattDaemon  -OR-  -p MattDaemon
+#     if [[ ${target} == *-p* ]] || [[ ${target} == *--privmsg* ]] ; then
+#         target=$(echo ${target} | sed -r 's/ *--privmsg//' | sed -r 's/ *-p//' | xargs)
+#         channelSubroutine ${nick} ${target} 'p'              # channelSubroutine _sharp MattDaemon p
+#     else
+#         channelSubroutine ${chan} ${target}                  # channelSubroutine #bingobobby MattDaemon
+#     fi
 
-# Handle incoming msg from self (tbot => tbot).
+# # Handle incoming msg from self (_reminderbot => _reminderbot).
 
-elif has "${msg}" "^!signal " && [[ ${nick} = "tbot" ]] ; then
-    signalSubroutine ${msg}
+# elif has "${msg}" "^!signal " && [[ ${nick} = "_reminderbot" ]] ; then
+#     signalSubroutine ${msg}
 
-# Have tbot send an IRC command to the IRC server.
+# Have _reminderbot send an IRC command to the IRC server.
 
-elif has "${msg}" "^tbot: injectcmd " && [[ ${nick} = "_sharp" ]] ; then
-    cmd=$(echo ${msg} | sed -r 's/^tbot: injectcmd //')
+elif has "${msg}" "^_reminderbot: injectcmd " && [[ ${nick} = "_sharp" ]] ; then
+    cmd=$(echo ${msg} | sed -r 's/^_reminderbot: injectcmd //')
     send "${cmd}"
 
-# Have tbot send a message.
+# Have _reminderbot send a message.
 
-elif has "${msg}" "^tbot: sendcmd " && [[ ${nick} = "_sharp" ]] ; then
-    buffer=$(echo ${msg} | sed -re 's/^tbot: sendcmd //')
+elif has "${msg}" "^_reminderbot: sendcmd " && [[ ${nick} = "_sharp" ]] ; then
+    buffer=$(echo ${msg} | sed -re 's/^_reminderbot: sendcmd //')
     dest=$(echo ${buffer} | sed -e "s| .*||")
     message=$(echo ${buffer} | cut -d " " -f2-)
     say ${dest} "${message}"
