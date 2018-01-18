@@ -1,3 +1,63 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sun mon tue wed thu fri sat
+ 0   1   2   3   4   5   6
+
+
+
+
+
+
+
+
+
+
+
+
+echo '4 day 2 hour 13 min 5555 minutes 2 minute 8 hr 9 hrs 4 days 2 hours 13 mins' | sed -r 's|^([0-9]*) ([a-zA-Z]*) .*|\1 \2|'
+echo '4 day 2 hour 13 min 5555 minutes 2 minute 8 hr 9 hrs 4 days 2 hours 13 mins' | cut -d " " -f3-
+
+
+echo '4 day 2 hour 13 min 5555 minutes 2 minute 8 hr 9 hrs 4 days 2 hours 13 mins to DO SOMETHING FAIL' | sed -r 's|^in (.*(hour[s]?\|hr[s]?\|minute[s]?\|min[s]?\|day[s]?))*(.*)|\3|'
+
+echo 'in 4 day 2 hour 13 min 5555 minutes 2 minute 8 hr 9 hrs 4 days 2 hours 13 mins to DO SOMETHING FAIL' | sed -r 's|^(in .*(hour[s]?\|hr[s]?\|minute[s]?\|min[s]?\|day[s]?)).*|\1|'
+echo 'in 4 day 2 hour 13 min 5555 minutes 2 minutex 8 hr 9 hrs 4 days 2 hours 13 mins to do something' | sed -r 's|^(in .*(hours?\|hrs?\|minutes?\|mins?\|days?)).*|\1|'
+
+
+
+echo '4 day 2 hour 13 min 5555 minutes 2 minute 8 hr 9 hrs 4 days 2 hours 13 mins to DO SOMETHING FAIL' | sed -r 's|^(.*(hour[s]?\|hr[s]?\|minute[s]?\|min[s]?\|day[s]?))*(.*)|\3|'
+
+
+echo '1a0958b0-8a03-4e9b-b3df-232c33fdd72f: Thu Jan 18 16:19:02 PST 2018, #bingobobby, to do nothing' >> /home/dkim/sandbox/_reminderbot/tasks/tmp
+
+
+
+
 at -3pm do something
 at 3pm do something
 at 3:00pm do something
@@ -22,3 +82,36 @@ this monday at 0112 to eat cereal
 this monday at 2359 to eat cereal
 this monday at 2459 to eat cereal
 on saturday at 19:00 party all the time
+
+in 2d8h1m to do something
+in 2h1d to do nothing
+in 1m1d1h to do everything
+
+
+
+remind me 
+
+
+echo '6c652981-f1b8-4703-93e0-6c90111daa89: Thu Jan 18 16:40:30 PST 2018, #bingobobby, to do everything' | sed -r 's/^(.*): .*/\1/'
+echo '6c652981-f1b8-4703-93e0-6c90111daa89: Thu Jan 18 16:40:30 PST 2018, #bingobobby, to do everything' | sed -r 's/^.*: ([ a-zA-Z0-9:]*), .*/\1/'
+echo '6c652981-f1b8-4703-93e0-6c90111daa89: Thu Jan 18 16:40:30 PST 2018, #bingobobby, to do everything' | sed -r 's/^.*: (.*), (.*),.*/\2/'
+echo '6c652981-f1b8-4703-93e0-6c90111daa89: Thu Jan 18 16:40:30 PST 2018, #bingobobby, to do everything' | sed -r 's/^.*: (.*), (.*), (.*)/\3/'
+
+
+
+echo '8e4caf0e-5dfc-4ca0-b3a9-5dad40a9fabd: Thu Jan 18 16:56:04 PST 2018, #bingobobby, _sharp, to do everything EVERYTHING' | sed -r 's/^(.*): .*/\1/'
+echo '8e4caf0e-5dfc-4ca0-b3a9-5dad40a9fabd: Thu Jan 18 16:56:04 PST 2018, #bingobobby, _sharp, to do everything EVERYTHING' | sed -r 's/^.*: ([ a-zA-Z0-9:]*), .*/\1/'
+echo '8e4caf0e-5dfc-4ca0-b3a9-5dad40a9fabd: Thu Jan 18 16:56:04 PST 2018, #bingobobby, _sharp, to do everything EVERYTHING' | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), .*/\2/'
+echo '8e4caf0e-5dfc-4ca0-b3a9-5dad40a9fabd: Thu Jan 18 16:56:04 PST 2018, #bingobobby, _sharp, to do everything EVERYTHING' | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), .*/\3/'
+echo '8e4caf0e-5dfc-4ca0-b3a9-5dad40a9fabd: Thu Jan 18 16:56:04 PST 2018, #bingobobby, _sharp, to do everything EVERYTHING' | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), (.*.)/\4/'
+
+
+time_sched=$(echo ${line} 
+chan=$(echo ${line} | sed -r 's/^.*: (.*), (.*),.*/\2/')
+task=$(echo ${line} | sed -r 's/^.*: (.*), (.*), (.*)/\3/')
+
+
+
+
+8e4caf0e-5dfc-4ca0-b3a9-5dad40a9fabd: Thu Jan 18 16:56:04 PST 2018, #bingobobby, _sharp, to do everything EVERYTHING
+
