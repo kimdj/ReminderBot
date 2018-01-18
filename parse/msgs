@@ -1,0 +1,24 @@
+at -3pm do something
+at 3pm do something
+at 3:00pm do something
+at 3:00pm on monday do something
+at 3:00pm on 7/2/18 do something
+at 3:00pm on 8-3-18 do something
+at 3:00 on 8-3-18 do something
+on 7/2/18 do something
+on 8-3-18 do something
+on 01-18-18 at 3:00pm party all the time
+on 01-18-18 at 15:00 party all the time
+on ${day_of_week} at ${time} party all the time
+next monday to eat cereal
+next monday at 9:30pm to eat cereal
+next monday at 9:30 to eat cereal
+on saturday at 7:00pm party all the time
+this monday to eat cereal
+this monday at 12:12am to eat cereal
+this monday at 12:12 to eat cereal
+this monday at 1712 to eat cereal
+this monday at 0112 to eat cereal
+this monday at 2359 to eat cereal
+this monday at 2459 to eat cereal
+on saturday at 19:00 party all the time
