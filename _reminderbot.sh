@@ -4,6 +4,15 @@
 # This program is licensed under the "MIT License".
 # Date of inception: 1/14/17
 
+
+
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+
+function ctrl_c() {
+        echo "***** Trapped CTRL-C *****"
+}
+
 # LOG_FILE_1=/home/dkim/sandbox/_reminderbot/log.stdout        # Redirect file descriptors 1 and 2 to log.out
 # LOG_FILE_2=/home/dkim/sandbox/_reminderbot/log.stderr
 # exec > >(tee -a ${LOG_FILE_1} )
@@ -19,18 +28,50 @@ prevdate=0
 
 function send {
     while read -r line; do
-      newdate=`date +%s%N`
-      if [ $prevdate -gt $newdate ] ; then
-        sleep `bc -l <<< "($prevdate - $newdate) / $nanos"`
         newdate=`date +%s%N`
-      fi
-      prevdate=$newdate+$interval
-      echo "-> $1"
-      echo "$line" >> ${BOT_NICK}.io
+        if [ $prevdate -gt $newdate ] ; then
+            sleep `bc -l <<< "($prevdate - $newdate) / $nanos"`
+            newdate=`date +%s%N`
+        fi
+        prevdate=$newdate+$interval
+        echo "-> $1"
+        echo "$line" >> ${BOT_NICK}.io
     done <<< "$1"
 }
 
-cp commands/join-cmd commands/cmd               # Join channels.
+function signalSubroutine {
+    if [ -e tasks/tmp ] ; then                  # If tasks/tmp exists, send file contents !signal handler.  Then, remove tasks/tmp.
+        while read line; do
+            uuid=$(echo ${line} | sed -r 's/^(.*): .*/\1/')
+            time_sched=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), .*/\1/')
+            chan=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), .*/\2/')
+            nick=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), .*/\3/')
+            task=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), (.*.)/\4/')
+            echo "line ========> ${line}"
+            echo "uuid ===============> ${uuid}"
+            echo "time_sched =========> ${time_sched}"
+            echo "task ===============> ${task}"
+            echo "nick ===============> ${nick}"
+            echo "chan ===============> ${chan}"
+            # send "PRIVMSG ${chan} :line ==> ${line}"
+            send "PRIVMSG _reminderbot :!signal ${task} ~ ${time_sched}) ~ ${chan} ~ ${nick}"
+            crontab -l | grep -v "${uuid}" | crontab -              # Remove the cronjob by grep-ing out the specified cronjob uuid.
+        done < tasks/tmp
+
+        rm tasks/tmp
+    fi
+}
+
+function cmdSubroutine {
+    if [ -e commands/cmd ] ; then                   # if a cmd file exists, run the cmd
+        while read line ; do
+            send "$line"
+        done < commands/cmd
+        rm commands/cmd
+    fi
+}
+
+cp commands/join-cmd commands/cmd                   # Join channels.
 
 rm ${BOT_NICK}.io
 mkfifo ${BOT_NICK}.io
@@ -51,15 +92,15 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
         started="yes"
     fi
 
-    if [ -e commands/cmd ] ; then               # if a cmd file exists, run the cmd
-        while read line ; do
-            send "$line"
-        done < commands/cmd
-        rm commands/cmd
-    fi
+    while [ -z "${irc}" ] ; do                      # While loop is used to enable non-blocking I/O (read).
+        read -t 0.5 irc                             # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
+        if [ $(echo $?) == 1 ] ; then irc='' ; fi
 
-    read irc
-    echo "==> $irc" >> irc-output.log           # Re-direct incoming internal irc msgs to file. (Used for !channels cmd)
+        signalSubroutine
+        cmdSubroutine
+    done
+
+    echo "==> $irc" >> irc-output.log               # Re-direct incoming internal irc msgs to file.
     echo "==> $irc"
     if $(echo "$irc" | cut -d ' ' -f 1 | grep -P "PING" > /dev/null) ; then
         send "PONG"
@@ -76,5 +117,5 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
         fi
     fi
 
-    # response=$(tac irc-output.log | grep -n '319' | head -n 1 | sed 's|[^#]*_reminderbot \(.*\) :#\(.*\)|\1 is currently in #\2|')
+    irc=''                                          # Reset ${irc}.
 done

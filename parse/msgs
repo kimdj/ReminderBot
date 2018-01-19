@@ -17,8 +17,11 @@
 
 
 
-
-
+ps -eo user,%cpu,%mem,cmd,pid --sort=%cpu | grep dkim | grep bot | sed -s 's|^dkim[ ]*||' | grep _reminderbot | head -n 1
+ps -eo user,%cpu,%mem,cmd,pid --sort=%cpu | grep dkim | grep bot | sed -s 's|^dkim[ ]*||' | grep tbot | head -n 1
+ps -eo user,%cpu,%mem,cmd,pid --sort=%cpu | grep dkim | grep bot | sed -s 's|^dkim[ ]*||' | grep lprbot | head -n 1
+ps -eo user,%cpu,%mem,cmd,pid --sort=%cpu | grep dkim | grep bot | sed -s 's|^dkim[ ]*||' | grep rosterbot | head -n 1
+ps -eo user,%cpu,%mem,cmd,pid --sort=%cpu | grep dkim | grep bot | sed -s 's|^dkim[ ]*||' | grep __reminderbot | head -n 1
 
 
 

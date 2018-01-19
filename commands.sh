@@ -7,8 +7,8 @@
 read nick chan msg      # Assign the 3 arguments to nick, chan and msg.
 
 IFS=''                  # internal field separator; variable which defines the char(s)
-                        # used to separate a pattern into tokens for some operations
-                        # (i.e. space, tab, newline)
+# used to separate a pattern into tokens for some operations
+# (i.e. space, tab, newline)
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BOT_NICK="$(grep -P "BOT_NICK=.*" ${DIR}/_reminderbot.sh | cut -d '=' -f 2- | tr -d '"')"
@@ -17,8 +17,8 @@ if [ "${chan}" = "${BOT_NICK}" ] ; then chan="${nick}" ; fi
 
 ###################################################  Settings  ####################################################
 
-MAX_REM='500'
-AUTHORIZED='_sharp MattDaemon'
+MAX_REM='500'                                       # Maximum number of reminders (or maximum number of cronjobs).
+AUTHORIZED='_sharp MattDaemon'                      # List of users authorized to execute bot commands (e.g. injectcmd, sendcmd).
 
 ###############################################  Subroutines Begin  ###############################################
 
@@ -45,10 +45,10 @@ function checkFormatSubroutine {
     payload=${1}
 
     if [ -z $(echo ${payload} | sed -r 's|[0-9]?[0-9]{1}:[0-9]{2}[a|p]m||' | sed -r 's|[0-9]?[0-9]{1}:?[0-9]{2}||' | sed -r 's|[0-9]?[0-9]{1}[a|p]m||') ] ; then
-        # say ${chan} 'time format OK'
+# say ${chan} 'time format OK'
         return 0
     else
-        # say ${chan} 'time format FAIL'
+# say ${chan} 'time format FAIL'
         return 1
     fi
 }
@@ -92,7 +92,7 @@ function timeSubroutine {
     elif [ "${h}" == "12" ] && [ "${am_pm}" == "am" ] ; then
         h='00'
     fi
-    # say ${chan} "==> ${h}${m}"
+# say ${chan} "==> ${h}${m}"
 }
 
 # This subroutine parses a date input value and sets variables accordingly (e.g. ${day_of_month}, ${month}, ${day_of_week}).
@@ -125,9 +125,9 @@ function daySubroutine {
         day_t=$(echo ${payload} | sed -r 's|[0-9]?[0-9]{1}[\/-]([0-9]?[0-9]{1}).*|\1|')
         year_t=$(echo ${payload} | sed -r 's|[0-9]?[0-9]{1}[\/-][0-9]?[0-9]{1}[\/-]([0-9]?[0-9]{1}).*|\1|')
 
-        # say ${chan} "==> =========================> ${month_t}"
-        # say ${chan} "==> =========================> ${day_t}"
-        # say ${chan} "==> =========================> ${year_t}"
+# say ${chan} "==> =========================> ${month_t}"
+# say ${chan} "==> =========================> ${day_t}"
+# say ${chan} "==> =========================> ${year_t}"
 
         if [ "${day_t}" -gt "$(date -d "${month_t}/1 + 1 month - 1 day" "+%d")" ] ; then        # If day is out-of-bounds, return immediately.
             return 1                                                                            # (i.e. specified day exceeds the last day of a given month)
@@ -153,7 +153,7 @@ function daySubroutine {
 
 function parseSubroutine {
     payload=${1}                                          # at 3pm to do something, blah
-    # say ${chan} "==> payload: ${payload}"
+# say ${chan} "==> payload: ${payload}"
 
     at=$(echo ${payload} | sed -r 's|(.*)(at [0-9][0-9apm:]*)(.*)|\2|')                             # Populate ${at}.
     if [[ "${at}" == "${payload}" ]] ; then at=$(echo ${payload} | sed -r 's|.*||') ; fi
@@ -172,100 +172,99 @@ function parseSubroutine {
     payload=$(echo ${payload} | sed -r 's|(.*)(this [mondaytueswhrfi]*)(.*)|\1\3|')
     task=$(echo ${payload} | sed -r 's|(.*)(next [mondaytueswhrfi]*)(.*)|\1\3|' | sed -r 's|^[ ]*||' | sed -r 's|[ ]*$||')  # Populate ${task}.
 
-    # say ${chan} "====================================> task: ${task}"
-    # echo "    at: ${at}"
-    # echo "  on_d: ${on_d}"
-    # echo "this_d: ${this_d}"
-    # echo "next_d: ${next_d}"
-    # echo " "
+# say ${chan} "====================================> task: ${task}"
+# echo "    at: ${at}"
+# echo "  on_d: ${on_d}"
+# echo "this_d: ${this_d}"
+# echo "next_d: ${next_d}"
+# echo " "
 
     at=$(echo ${at} | sed -r 's|.*at [^0-9]*(.*)|\1|')                                              # at 3:00pm ==> 3:00pm
     on_d=$(echo ${on_d} | sed -r 's|.*on (.*)|\1|')                                                 # on sunday ==> sunday
     this_d=$(echo ${this_d} | sed -r 's|.*this (.*)|\1|')                                           # this fri ==> fri
     next_d=$(echo ${next_d} | sed -r 's|.*next (.*)|\1|')                                           # next wed ==> wed
 
-    # echo "    at ==> ${at}"
-    # echo "  on_d ==> ${on_d}"
-    # echo "this_d ==> ${this_d}"
-    # echo "next_d ==> ${next_d}"
+# echo "    at ==> ${at}"
+# echo "  on_d ==> ${on_d}"
+# echo "this_d ==> ${this_d}"
+# echo "next_d ==> ${next_d}"
 
     if [ -z "${at}" ] && [ -z "${on_d}" ] && [ -z "${this_d}" ] && [ -z "${next_d}" ] ; then
         say ${chan} "ERROR: $(uuidgen)"
         return 1
     fi
 
-#   Example of cronjob definition:
+#   Example of cronjob definition:        ########################################################
 #   .---------------- minute (0 - 59)
 #   |  .------------- hour (0 - 23)
 #   |  |  .---------- day of month (1 - 31)
 #   |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
 #   |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
 #   |  |  |  |  |
-#   *  *  *  *  * user-name  command to be executed
-
+#   *  *  *  *  * user-name  command to be executed        #######################################
 
     if [ -n "${on_d}" ] ; then
         if [ -n "${at}" ] ; then                                    # Case: on sunday at 3:00pm
-            # say ${chan} '11111'
+# say ${chan} 'Case: on ... , at ...'
             timeSubroutine "${at}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
             daySubroutine "${on_d}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
 
             cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
-            # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
         else                                                        # Case: on monday
-            # say ${chan} '22222'
+# say ${chan} 'Case: on ...'
             timeSubroutine "9:00am"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
             daySubroutine "${on_d}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
 
             cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
-            # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
         fi
     elif [ -n "${this_d}" ] ; then
         if [ -n "${at}" ] ; then                                    # Case: this tuesday at 4:00am
-            # say ${chan} '33333'
+# say ${chan} 'Case: this ... , at ...'
             timeSubroutine "${at}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
             daySubroutine "${this_d}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
 
             cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
-            # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
         else                                                        # Case: this wednesday
-            # say ${chan} '44444'
+# say ${chan} 'Case: this ...'
             timeSubroutine "9:00am"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
             daySubroutine "${this_d}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
 
             cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
-            # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
         fi
     elif [ -n "${next_d}" ] ; then
         if [ -n "${at}" ] ; then                                    # Case: next thursday at 5:00pm
-            # say ${chan} '55555'
+# say ${chan} 'Case: next ..., at ...'
             timeSubroutine "${at}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
             daySubroutine "${next_d}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
 
             cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
-            # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
         else                                                        # Case: next friday
-            # say ${chan} '66666'
+# say ${chan} 'Case: next ...'
             timeSubroutine "9:00am"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
             daySubroutine "${next_d}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
 
             cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
-            # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
         fi
     elif [ -n "${at}" ] ; then                                      # Case: at 10:00am
-        # say ${chan} '77777'
+# say ${chan} 'Case: at ...'
         timeSubroutine "${at}"
 
         current_time=$(date +%H%M)
@@ -277,15 +276,13 @@ function parseSubroutine {
         month=$(date +%m)
 
         cronjob=$(echo "${m} ${h} ${day} ${month} *")
-        # say ${chan} "==> cronjob: ${cronjob}"
+# say ${chan} "==> cronjob: ${cronjob}"
     else                                                            # missing values
         say ${chan} 'FATAL ERROR: missing values'
-        if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
-        # send error msg
         return 1
     fi
 
-    # say ${chan} "==> END REACHED; SUCCESS!"
+# say ${chan} "==> END REACHED; SUCCESS!"
 }
 
 # This subroutine converts a cronjob entry back to standard form.
@@ -295,19 +292,16 @@ function convertCronjobSubroutine {
 # say ${chan} "=====> ${payload}"
     m=$(echo ${payload} | sed -r 's|(.*) (.*) (.*) (.*) (.*).*|\1|')
     h=$(echo ${payload} | sed -r 's|(.*) (.*) (.*) (.*) (.*).*|\2|')
-    # t=$(date -d ${h}${m} +%r | sed -r 's|([0-9]{2}:[0-9]{2}):[0-9]{2}(.*)|\1\2|')
 
     if [ "${h}${m}" == "2400" ] ; then h='00' ; fi                  # Special case: if 2400, convert to 0000.
 
     day_of_month=$(echo ${payload} | sed -r 's|(.*) (.*) (.*) (.*) (.*).*|\3|')
     month=$(echo ${payload} | sed -r 's|(.*) (.*) (.*) (.*) (.*).*|\4|')
-    # day_of_month_plus_month=$(date -d "${month}/${day_of_month}" | sed -r 's|(.*) (.*) (.*).*|\2 \3|')
+# day_of_month_plus_month=$(date -d "${month}/${day_of_month}" | sed -r 's|(.*) (.*) (.*).*|\2 \3|')
 # say ${chan} "${m} ${h} ${day_of_month} ${month}"
-    # c=$(date --date="Feb 2 2014 13:12:10")
     c=$(date --date="${month}/${day_of_month}/$(date +%y) ${h}:${m}")
-    # say ${chan} "c ==============> ${c}"
-# say ${chan} "payload ==~> ${payload}"
-    # day_of_week=$(date -d "$(echo "${payload}" | sed -r 's|(.*) (.*) (.*) (.*) (.*).*|\5|')" | sed -r 's|(.{3}).*|\1|')
+# say ${chan} "c ==============> ${c}"
+# say ${chan} "payload ==> ${payload}"
     day_of_week="$(echo "${payload}" | sed -r 's|(.*) (.*) (.*) (.*) (.*).*|\5|' | sed -r 's|(.{3}).*|\1|')"
 # say ${chan} "day_of_week =====> ${day_of_week}"
     if [ "${day_of_week}" == '*' ] ; then
@@ -320,44 +314,40 @@ function convertCronjobSubroutine {
          [ ! $(echo ${day_of_week} | sed -r 's|fri(day)?||') ] ||
          [ ! $(echo ${day_of_week} | sed -r 's|sat(urday)?||') ] ; then
         c=$(date --date="${day_of_week} ${h}:${m}")
-        # say ${chan} "test"
     elif [ "${day_of_week}" -ge 0 -a "${day_of_week}" -le 6 ] ; then
         true
     else
         return 1
     fi
 
-    # say ${chan} "c ==============> ${c}"
-
     converted_cronjob=$(echo ${c})
+# say ${chan} "c ==============> ${c}"
 }
 
 
-# Add a cronjob.
+# This subroutine parses a message for a reminder scheduling information, and adds a cronjob.
 
 function cronjobSubroutine {
     payload=${1}                                                  # Entire message (e.g. on saturday to do something, tomorrow to do the thing).
-    # say ${chan} "MAIN PAYLOAD =====> ${payload}"
-
+# say ${chan} "MAIN PAYLOAD =====> ${payload}"
     if [[ $(echo ${payload,,} | sed -r 's|^(tomorrow).*|\1|') == "tomorrow" ]] || [[ $(echo ${payload,,} | sed -r 's|^(tmrw).*|\1|') == "tmrw" ]] ; then
 # say ${chan} "entering cronjobSubroutine A (testing phase)"
         payload=$(echo ${payload} | cut -d ' ' -f2-)                    # Cut 'tomorrow' or 'tmrw' from ${payload}
-        # at=$(echo ${payload} | sed -r 's|^(at )(.*) ||')
         at=$(echo ${payload} | sed -r 's|(.*)(at [0-9][0-9apm:]*)(.*)|\2|')
-        # say ${chan} "at ==> ${at}"
-        # say ${chan} "payload ==> ${payload}"
+# say ${chan} "at ==> ${at}"
+# say ${chan} "payload ==> ${payload}"
         if [ "${at}" == "${payload}" ] ; then           # Case: 'at 300' doesn't exist
-            # say ${chan} "AA"
+# say ${chan} "AA"
             at='9:00am'
             timeSubroutine "${at}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
-            # say ${chan} "${h}${m}"
+# say ${chan} "${h}${m}"
         else
-            # say ${chan} "AB"
+# say ${chan} "AB"
             at=$(echo ${at} | sed -r 's|^at ||')
             timeSubroutine "${at}"
             if [ "$(echo $?)" == "1" ] ; then return 1 ; fi
-            # say ${chan} "${h}${m}"
+# say ${chan} "${h}${m}"
         fi
 
         day_of_month=$(date --date="tomorrow" +%d)
@@ -366,14 +356,13 @@ function cronjobSubroutine {
         cronjob=$(echo "${m} ${h} ${day_of_month} ${month} ${day_of_week}")
 
         uuid=$(uuidgen)
-        (crontab -l ; echo "${cronjob} echo \"${uuid}: $(date), ${chan}, ${nick}, ${task}\" >> /home/dkim/sandbox/_reminderbot/tasks/tmp") | crontab -       # Create a new cronjob entry.
-        # say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
+        (crontab -l ; echo "${cronjob} echo \"${uuid}: $(date), ${chan}, ${nick}, ${task}\" >> /home/dkim/sandbox/_reminderbot/tasks/tmp") | crontab -       # Create a new cronjob entry.  (NOTE: when a cronjob is executed, ../tmp will be created.  Then, __reminderbot will send contents of tmp to _reminderbot, and remove tmp.)
+# say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
         convertCronjobSubroutine "${cronjob}"
         say ${chan} "${nick}: You will be reminded @ ${converted_cronjob}"
 
     elif [ ! $(echo ${payload} | sed -r 's|^(in ([0-9]+[dhm]{1})+).*|\1|') == "${payload}" ] ; then                       # in 1d2h3m do something ==> in 1d2h3m
 # say ${chan} "entering cronjobSubroutine B (testing phase)"
-# say ${chan} "HERE ---------------------------------------"
 # say ${chan} "payload ==> ${payload}"
         times_array=$(echo ${payload} | sed -r 's|^in ([0-9]+.*(d\|h\|m)) .*|\1|')                                 # 3d2h1m
 # say ${chan} "times_array ==> ${times_array}"
@@ -386,15 +375,14 @@ function cronjobSubroutine {
             times_array=$(echo ${times_array} | cut -d " "  -f2-)
         done
 
-# say ${chan} "DEBUGG -----------------------"
-#         say ${chan} "array len ==> ${#ARRAY[@]}"                  # DEBUG
+#         say ${chan} "array len ==> ${#ARRAY[@]}"                  # DEBUG: display array len, content
 #         say ${chan} "array content ==> ${ARRAY[@]}"
 #         for i in "${ARRAY[@]}" ; do
 #             say ${chan} "${i}"
 #         done
-# say ${chan} "DEBUGG -----------------------"
+
         for i in "${ARRAY[@]}" ; do                                 # Populate days, hours, minutes variables.
-            # say ${chan} "${i}"
+# say ${chan} "i ==> ${i}"
             if [[ "${i}" == *h* ]] ; then
 # say ${chan} "ADDING TO HOURS"
                 hours=$(echo ${i} | sed -r 's|h||')
@@ -411,17 +399,17 @@ function cronjobSubroutine {
         done
 
         task=$(echo ${payload} | sed -r 's|^in ([0-9]+.*(d\|h\|m)) (.*)|\3|' | sed 's|^[ ]*||' | sed 's|[ ]*$||')
-        # say ${chan} "days, hours, minutes ==> ${days} ${hours} ${minutes}"
-        # say ${chan} "task ==> ${task}"
-# say ${chan} "HERE ---------------------------------------"
+# say ${chan} "days, hours, minutes ==> ${days} ${hours} ${minutes}"
+# say ${chan} "task ==> ${task}"
+
         if [ ! ${days} ] && [ ! ${hours} ] && [ ! ${minutes} ] ; then                                     # If d,h,m are missing, return immediately.
             if [ $(echo ${days}${hours}${minutes} | sed 's/[ 0-9dhm]*//') ] ; then return 1 ; fi
         fi
-# say ${chan} "HERE ---------------------------------------"
+
         if [ -z "${days}" ] ; then days='0d' ; fi                               # Populate remaining empty variables with default values.
         if [ -z "${hours}" ] ; then hours='0h' ; fi
         if [ -z "${minutes}" ] ; then minutes='0m' ; fi
-# say ${chan} "HERE ---------------------------------------"
+
         ce_time=$(date +%s)                                                     # current epoch time
 # say ${chan} "ce_time ==> ${ce_time}"
 # say ${chan} "${days} ${hours} ${minutes}"
@@ -435,8 +423,8 @@ function cronjobSubroutine {
         fi
 
         e_time=$(( ${days}*24*60*60 + ${hours}*60*60 + ${minutes}*60 + ${ce_time} ))         # convert #d#h#m ==> epoch time
-                                                                                # (d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60)
-# say ${chan} "HERE ---------------------------------------"
+# (d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60)
+
         s_time=$(date -d @${e_time} +%M%H%d%m)                                            # convert epoch time ==> standard time
         min=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1/')
         hour=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\2/')
@@ -444,7 +432,7 @@ function cronjobSubroutine {
         month=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\4/')
         uuid=$(uuidgen)
         (crontab -l ; echo "${min} ${hour} ${day} ${month} * echo \"${uuid}: $(date), ${chan}, ${nick}, ${task}\" >> /home/dkim/sandbox/_reminderbot/tasks/tmp") | crontab -       # Create a new cronjob entry.
-        # say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
+# say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
         say ${chan} "${nick}: You will be reminded @ $(date -d @${e_time})"
     elif [ ! $(echo ${payload} | sed -r 's|^(in .*(hour[s]?\|hr[s]?\|minute[s]?\|min[s]?\|day[s]?)).*|\1|') == "${payload}" ] ; then                      #  in 1 hour do something ==> in 1 hour
 # say ${chan} "entering cronjobSubroutine C (testing phase)"
@@ -458,14 +446,14 @@ function cronjobSubroutine {
             times_array=$(echo ${times_array} | cut -d " "  -f3-)
         done
 
-        # say ${chan} "array len ==> ${#ARRAY[@]}"                  # DEBUG
-        # say ${chan} "array content ==> ${ARRAY[@]}"
-        # for i in "${ARRAY[@]}" ; do
-        #     say ${chan} "${i}"
-        # done
+# say ${chan} "array len ==> ${#ARRAY[@]}"                  # DEBUG: display array len, content
+# say ${chan} "array content ==> ${ARRAY[@]}"
+# for i in "${ARRAY[@]}" ; do
+#     say ${chan} "${i}"
+# done
 
         for i in "${ARRAY[@]}" ; do                                 # Populate days, hours, minutes variables.
-            # say ${chan} "${i}"
+# say ${chan} "i ==> ${i}"
             if [[ "${i}" == *hour* ]] || [[ "${i}" == *hr* ]] ; then
 # say ${chan} "ADDING TO HOURS"
                 hours=$(echo ${i} | sed -r 's| .*||')
@@ -489,13 +477,13 @@ function cronjobSubroutine {
         if [ -z "${hours}" ] ; then hours='0' ; fi
         if [ -z "${minutes}" ] ; then minutes='0' ; fi
 
-        # say ${chan} "days =====> ${days}"
-        # say ${chan} "hours ====> ${hours}"
-        # say ${chan} "minutes ==> ${minutes}"
+# say ${chan} "days =====> ${days}"
+# say ${chan} "hours ====> ${hours}"
+# say ${chan} "minutes ==> ${minutes}"
 
-        ce_time=$(date +%s)                                                     # current epoch time
-        e_time=$(( ${days}*24*60*60 + ${hours}*60*60 + ${minutes}*60 + ${ce_time} ))         # convert #d#h#m ==> epoch time
-                                                                                # (d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60)
+        ce_time=$(date +%s)                                                                   # current epoch time
+        e_time=$(( ${days}*24*60*60 + ${hours}*60*60 + ${minutes}*60 + ${ce_time} ))          # convert #d#h#m ==> epoch time
+# (d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60)
 
         s_time=$(date -d @${e_time} +%M%H%d%m)                                            # convert epoch time ==> standard time
         min=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1/')
@@ -504,19 +492,19 @@ function cronjobSubroutine {
         month=$(echo ${s_time} | sed -r 's/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\4/')
         uuid=$(uuidgen)
         (crontab -l ; echo "${min} ${hour} ${day} ${month} * echo \"${uuid}: $(date), ${chan}, ${nick}, ${task}\" >> /home/dkim/sandbox/_reminderbot/tasks/tmp") | crontab -       # Create a new cronjob entry.
-        # say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
+# say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
         say ${chan} "${nick}: You will be reminded @ $(date -d @${e_time})"
     else                                                                                # on sun at 300, next monday at 3:00pm, this sunday
 # say ${chan} "entering cronjobSubroutine D (testing phase)"
         parseSubroutine "${payload}"
         if [ "$(echo $?)" == "1" ] ; then
-            say ${chan} "parseSubroutine failed"
+            # say ${chan} "parseSubroutine failed"
             return 1
         fi                                  # If parseSubroutine fails, return immediately.
 
         uuid=$(uuidgen)
         (crontab -l ; echo "${cronjob} echo \"${uuid}: $(date), ${chan}, ${nick}, ${task}\" >> /home/dkim/sandbox/_reminderbot/tasks/tmp") | crontab -       # Create a new cronjob entry.
-        # say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
+# say ${chan} "complete cronjob: $(echo "${cronjob} echo ${uuid}: $(date), ${chan}, ${task}")"
         convertCronjobSubroutine "${cronjob}"
         say ${chan} "${nick}: You will be reminded @ ${converted_cronjob}"
     fi
@@ -531,7 +519,7 @@ function helpSubroutine {
     say ${chan} '       "remind me on sun at 1700 ..." | "remind me at 3:00pm on 8/8/18 ..."'
     say ${chan} '       "remind me at 23:59 on 9-9-18 ..." | "remind me on 3/13/18 at 13:13 ..."'
     say ${chan} '       "remind me tomorrow ..." | "remind me tmrw at 3:13pm ..."'
-    # say ${chan} 'usage: remind me in #d#h#m ...'
+# say ${chan} 'usage: remind me in #d#h#m ...'
 }
 
 ################################################  Subroutines End  ################################################
@@ -550,7 +538,10 @@ if has "${msg}" "^!_reminderbot$" || has "${msg}" "^_reminderbot: help$" ; then
 # Alive.
 
 elif has "${msg}" "^!alive(\?)?$" || has "${msg}" "^_reminderbot: alive(\?)?$" ; then
-    say ${chan} "running! $(ps aux | grep ./_reminderbot | head -n 1 | awk '{ print $3,$4,$9,$10 }')"
+    str1='running! '
+    str2=$(ps aux | grep ./_reminderbot | head -n 1 | awk '{ print "[%CPU "$3"]", "[%MEM "$4"]", "[VSZ "$5"]", "[TIME "$10"]" }')
+    str="${str1}${str2}"
+    say ${chan} "${str}"
 
 # Source.
 
@@ -561,48 +552,30 @@ elif has "${msg}" "^_reminderbot: source$" ; then
 
 elif has "${msg}" "^remind me " ; then
     cronjob_len=$(crontab -l | sed 's/^ *//;/^[*@0-9]/!d' | wc -l)
-    if [ ${cronjob_len} -gt ${MAX_REM} ] ; then                                            # Max reminders ==> 500
+    if [ ${cronjob_len} -gt ${MAX_REM} ] ; then                                             # Max reminders ==> 500
         say ${chan} "YAY!!! You have officially reached the self-imposed maximum number of reminders (i.e. 500)."
         say ${chan} "NO SOUP FOR YOU! COME BACK ONE YEAR! NEXT!"
     fi
 
     payload=$(echo ${msg} | sed -r 's/^remind me //')
+    payload=$(echo ${payload} | sed -r 's|[^ a-zA-Z0-9]||g' | sed 's/>//g' | sed 's/<//g')            # Sanitize user input (i.e. remove non-alphanumeric characters).
+# say ${chan} "sanitized msg: ${payload}"
     cronjobSubroutine "${payload}"
-    # if [ $(echo $?) ] ; then say ${chan} "Sorry, I couldn't setup your reminder" ; fi
-
-# # Get the list of all channels. [A]
-
-# elif has "${msg}" "^!channels -p$" || has "${msg}" "^!channels --privmsg$" ; then
-#     allChannelSubroutine ${nick}
-
-# # Handle incoming msg from self (_reminderbot => _reminderbot).
-
-# elif has "${msg}" "^!signal_allchan " && [[ ${nick} = "_reminderbot" ]] ; then
-#     signalSubroutine ${msg}
-
-# # Get a nick's channels (nick/chan => _reminderbot).
-
-# elif has "${msg}" "^!channels " ; then                    # !channels MattDaemon  -OR-  !channels -p MattDaemon
-#     target=$(echo ${msg} | sed -r 's/^!channels //')         # MattDaemon  -OR-  -p MattDaemon
-#     if [[ ${target} == *-p* ]] || [[ ${target} == *--privmsg* ]] ; then
-#         target=$(echo ${target} | sed -r 's/ *--privmsg//' | sed -r 's/ *-p//' | xargs)
-#         channelSubroutine ${nick} ${target} 'p'              # channelSubroutine _sharp MattDaemon p
-#     else
-#         channelSubroutine ${chan} ${target}                  # channelSubroutine #bingobobby MattDaemon
-#     fi
+    if [ "$(echo $?)" == "1" ] ; then
+        say ${chan} "Sorry, I couldn't setup your reminder."
+    fi
 
 # Handle incoming msg from self (_reminderbot => _reminderbot).
 
-elif has "${msg}" "^!signal " && [[ ${nick} = "__reminderbot" ]] ; then
+elif has "${msg}" "^!signal " && [[ ${nick} = "__reminderbot" ]] || [[ ${nick} = "_reminderbot" ]]; then
     payload=$(echo ${msg} | sed -r 's|!signal (.*)|\1|')
     task=$(echo ${payload} | sed -r 's|~.*||' | sed -r 's|[ ]*$||')
     time_sched=$(echo ${payload} | sed -r 's|.*~(.*)~.*~.*|\1|' | sed -r 's|^[ ]*||' | sed -r 's|[ \)]*$||')
     chan=$(echo ${payload} | sed -r 's|^(.*) ~ (.*) ~ (.*)|\2|')
     nick=$(echo ${payload} | sed -r 's|^(.*) ~ (.*) ~ (.*) ~ (.*)|\4|')
 
-    say ${chan} "${nick}: You asked me to remind you ${task} on ${time_sched}."
-
-# send "PRIVMSG _reminderbot :!signal ${task} ~ ${time_sched}) ~ ${chan} ~ ${nick}"
+    time_sched=$(date --date="${time_sched}" +"%a, %b %d %I:%M%P" | sed -r 's|(.*)0([0-9]{1})(.*)|\1\2\3|')
+    say ${chan} "${nick}: On ${time_sched}, you asked me to remind you ${task}."
 
 # Have _reminderbot send an IRC command to the IRC server.
 
