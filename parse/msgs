@@ -61,36 +61,101 @@ echo '1a0958b0-8a03-4e9b-b3df-232c33fdd72f: Thu Jan 18 16:19:02 PST 2018, #bingo
 
 
 
-at -3pm do something
-at 3pm do something
-at 3:00pm do something
-at 3:00pm on monday do something
-at 3:00pm on 7/2/18 do something
-at 3:00pm on 8-3-18 do something
-at 3:00 on 8-3-18 do something
-on 7/2/18 do something
-on 8-3-18 do something
-on 01-18-18 at 3:00pm party all the time
-on 01-18-18 at 15:00 party all the time
-on ${day_of_week} at ${time} party all the time
-next monday to eat cereal
-next monday at 9:30pm to eat cereal
-next monday at 9:30 to eat cereal
-on saturday at 7:00pm party all the time
-this monday to eat cereal
-this monday at 12:12am to eat cereal
-this monday at 12:12 to eat cereal
-this monday at 1712 to eat cereal
-this monday at 0112 to eat cereal
-this monday at 2359 to eat cereal
-this monday at 2459 to eat cereal
-on saturday at 19:00 party all the time
+remind me at -3-p-m d-o s-o-m-e-t-h-i-n-g
+remind me this monday at 2459 to eat cereal
 
-in 2d8h1m to do something
-in 2h1d to do nothing
-in 1m1d1h to do everything
+remind me at 0 do something
+remind me at 1 do something
+remind me at 12 do something
+remind me at 13 do something
+remind me at 24 do something
+remind me at 25 do something
+remind me at 100 do something
+remind me at 10000 do something
+remind me at 11111 do something
+remind me at 33333 do something
+remind me at 55555 do something
+remind me at 666666 do something
+remind me at 99999 do something
 
+remind me at 0000 do something
+remind me at 1111 do something
+remind me at 2359 do something
+remind me at 2400 do something
+remind me at 2401 do something
+remind me at 2500 do something
 
+remind me at 0am do something
+remind me at 1am do something
+remind me at 12am do something
+remind me at 13am do something
+
+remind me at 0pm do something
+remind me at 1pm do something
+remind me at 12pm do something
+remind me at 13pm do something
+
+remind me at 0:00am do something
+remind me at 1:00am do something
+remind me at 12:00am do something
+remind me at 13:00am do something
+
+remind me at 0:00pm do something
+remind me at 1:00pm do something
+remind me at 12:00pm do something
+remind me at 13:00pm do something
+
+remind me at 1:59pm do something
+remind me at 12:59pm do something
+
+remind me at 1:60pm do something
+remind me at 12:60pm do something
+
+remind me at 3:00pm on monday do something
+remind me at on monday 3:00pm do something
+
+remind me at 3:00pm on 7/2/18 do something
+remind me on 7/2/18 at 3:00pm do something
+remind me at on 7/2/18 3:00pm do something
+
+remind me at 3:00pm on 8-3-18 do something
+remind me at on 8-3-18 3:00pm do something
+
+remind me at 3:00 on 8-3-18 do something
+remind me on 7/2/18 do something
+remind me on 8-3-18 do something
+remind me on 01-18-18 at 3:00pm party all the time
+remind me on 01-18-18 at 15:00 party all the time
+remind me on ${day_of_week} at ${time} party all the time
+remind me next monday to eat cereal
+remind me next monday at 9:30pm to eat cereal
+remind me next monday at 9:30 to eat cereal
+remind me on saturday at 7:00pm party all the time
+remind me this mon to eat cereal
+remind me this monday at 12:12am to eat cereal
+remind me this monday at 12:12 to eat cereal
+remind me this monday at 1712 to eat cereal
+remind me this monday at 0112 to eat cereal
+remind me this monday at 2359 to eat cereal
+remind me on saturday at 19:00 party all the time
+
+remind me in 2d8h1m to do something
+remind me in 2h1d to do nothing
+remind me in 1m1d1h to do everything
+
+0000
+0000am
+00:00
+00:00am
+
+echo '930pm' | sed -r 's|[0-9]?[0-9]{1}[:]?[0-9]{2}([ap]{1}m)?||'
+echo '0000' | sed -r 's|[0-9]?[0-9]{1}[:]?[0-9]{2}([ap]{1}m)?||'
+echo '00:00' | sed -r 's|[0-9]?[0-9]{1}[:]?[0-9]{2}([ap]{1}m)?||'
+echo '00:00am' | sed -r 's|[0-9]?[0-9]{1}[:]?[0-9]{2}([ap]{1}m)?||'
+
+echo '930pm' | sed -r 's|[0-9]?[0-9]{1}:[0-9]{2}[a|p]m||' 
+echo '930pm' | sed -r 's|[0-9]?[0-9]{1}:?[0-9]{2}||' 
+echo '930pm' | sed -r 's|[0-9]?[0-9]{1}[a|p]m||'
 
 remind me 
 
