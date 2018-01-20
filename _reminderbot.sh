@@ -94,13 +94,13 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
 
     while [ -z "${irc}" ] ; do                      # While loop is used to enable non-blocking I/O (read).
         read -t 0.5 irc                             # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
-        if [ $(echo $?) == 1 ] ; then irc='' ; fi
+        if [ "$(echo $?)" == "1" ] ; then irc='' ; fi
 
         signalSubroutine
         cmdSubroutine
     done
 
-    echo "==> $irc" >> irc-output.log               # Re-direct incoming internal irc msgs to file.
+    # echo "==> $irc" >> irc-output.log               # Re-direct incoming internal irc msgs to file.
     echo "==> $irc"
     if $(echo "$irc" | cut -d ' ' -f 1 | grep -P "PING" > /dev/null) ; then
         send "PONG"
