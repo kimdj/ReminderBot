@@ -11,10 +11,12 @@ function ctrl_c() {
         echo "***** Trapped CTRL-C *****"
 }
 
-# LOG_FILE_1=${DIR}/log.stdout        # Redirect file descriptors 1 and 2 to log.out
-# LOG_FILE_2=${DIR}/log.stderr
-# exec > >(tee -a ${LOG_FILE_1} )
-# exec 2> >(tee -a ${LOG_FILE_2} >&2)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+LOG_FILE_1=${DIR}/log.stdout        # Redirect file descriptors 1 and 2 to log.out
+LOG_FILE_2=${DIR}/log.stderr
+exec > >(tee -a ${LOG_FILE_1} )
+exec 2> >(tee -a ${LOG_FILE_2} >&2)
 
 BOT_NICK="_reminderbot"
 KEY="$(cat ./config.txt)"
@@ -43,24 +45,24 @@ function send {
 function signalSubroutine {
     if [ -e tasks/tmp ] ; then                  # If tasks/tmp exists, send file contents !signal handler.  Then, remove tasks/tmp.
         while read line; do
-            uuid=$(echo ${line} | sed -r 's/^(.*): .*/\1/')
-            time_sched=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), .*/\1/')
-            chan=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), .*/\2/')
-            nick=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), .*/\3/')
-            task=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), (.*.)/\4/')
+            s_uuid=$(echo ${line} | sed -r 's/^(.*): .*/\1/')
+            s_time_sched=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), .*/\1/')
+            s_chan=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), .*/\2/')
+            s_nick=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), .*/\3/')
+            s_task=$(echo ${line} | sed -r 's/^.*: ([ a-zA-Z0-9:]*), ([^,]*), (.*), (.*.)/\4/')
 
             echo "==> tmp file detected; processing reminder ..."
-            echo "line ===============> ${line}"
-            echo "uuid ===============> ${uuid}"
-            echo "time_sched =========> ${time_sched}"
-            echo "task ===============> ${task}"
-            echo "nick ===============> ${nick}"
-            echo "chan ===============> ${chan}"
+            echo "line ===============> ${s_line}"
+            echo "uuid ===============> ${s_uuid}"
+            echo "time_sched =========> ${s_time_sched}"
+            echo "task ===============> ${s_task}"
+            echo "nick ===============> ${s_nick}"
+            echo "chan ===============> ${s_chan}"
 
-            payload="!signal ${task} ~ ${time_sched}) ~ ${chan} ~ ${nick}"
+            payload="!signal ${s_task} ~ ${s_time_sched}) ~ ${s_chan} ~ ${s_nick}"
 
             send "PRIVMSG _reminderbot :${payload}"
-            crontab -l | grep -v "${uuid}" | crontab -              # Remove the cronjob by grep-ing out the specified cronjob uuid.
+            crontab -l | grep -v "${s_uuid}" | crontab -              # Remove the cronjob by grep-ing out the specified cronjob uuid.
         done < tasks/tmp
 
         rm tasks/tmp
@@ -85,13 +87,13 @@ mkfifo ${BOT_NICK}.io
 
 tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while true ; do
 
-    # # If log.out is empty, reset logging.  (cron job empties log.out after backup)
-    # LOG_FILE_1=${DIR}/log.stdout
-    # LOG_FILE_2=${DIR}/log.stderr
-    # if [ ! -s ${LOG_FILE_1} ] && [ ! -s ${LOG_FILE_2} ] ; then
-    #     exec > >(tee -a ${LOG_FILE_1} )
-    #     exec 2> >(tee -a ${LOG_FILE_2} >&2)
-    # fi
+    # If log.out is empty, reset logging.  (cron job empties log.out after backup)
+    LOG_FILE_1=${DIR}/log.stdout
+    LOG_FILE_2=${DIR}/log.stderr
+    if [ ! -s ${LOG_FILE_1} ] && [ ! -s ${LOG_FILE_2} ] ; then
+        exec > >(tee -a ${LOG_FILE_1} )
+        exec 2> >(tee -a ${LOG_FILE_2} >&2)
+    fi
 
     if [[ -z ${started} ]] ; then
         send "NICK ${BOT_NICK}"
@@ -100,7 +102,7 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
     fi
 
     while [ -z "${irc}" ] ; do                              # While loop is used to enable non-blocking I/O (read).
-        read -t 0.5 irc                                     # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
+        read -r -t 0.5 irc                                     # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
         if [ "$(echo $?)" == "1" ] ; then irc='' ; fi
 
         signalSubroutine
