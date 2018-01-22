@@ -4,8 +4,6 @@
 # This program is licensed under the "MIT License".
 # Date of inception: 1/14/17
 
-
-
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
 
@@ -13,13 +11,14 @@ function ctrl_c() {
         echo "***** Trapped CTRL-C *****"
 }
 
-# LOG_FILE_1=/home/dkim/sandbox/_reminderbot/log.stdout        # Redirect file descriptors 1 and 2 to log.out
-# LOG_FILE_2=/home/dkim/sandbox/_reminderbot/log.stderr
+# LOG_FILE_1=${DIR}/log.stdout        # Redirect file descriptors 1 and 2 to log.out
+# LOG_FILE_2=${DIR}/log.stderr
 # exec > >(tee -a ${LOG_FILE_1} )
 # exec 2> >(tee -a ${LOG_FILE_2} >&2)
 
 BOT_NICK="_reminderbot"
 KEY="$(cat ./config.txt)"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 nanos=1000000000
 interval=$(( $nanos * 50 / 100 ))
@@ -38,6 +37,8 @@ function send {
         echo "$line" >> ${BOT_NICK}.io
     done <<< "$1"
 }
+
+# This subroutine checks for a file called tmp in ../tasks/ and sends the content as a signal msg to _reminderbot.
 
 function signalSubroutine {
     if [ -e tasks/tmp ] ; then                  # If tasks/tmp exists, send file contents !signal handler.  Then, remove tasks/tmp.
@@ -62,8 +63,10 @@ function signalSubroutine {
     fi
 }
 
+# This subroutine checks for a file called cmd in ../commands/ and executes it's content.
+
 function cmdSubroutine {
-    if [ -e commands/cmd ] ; then                   # if a cmd file exists, run the cmd
+    if [ -e commands/cmd ] ; then                       # if a cmd file exists, run the cmd
         while read line ; do
             send "$line"
         done < commands/cmd
@@ -71,7 +74,7 @@ function cmdSubroutine {
     fi
 }
 
-cp commands/join-cmd commands/cmd                   # Join channels.
+cp commands/join-cmd commands/cmd                       # Join channels.
 
 rm ${BOT_NICK}.io
 mkfifo ${BOT_NICK}.io
@@ -79,8 +82,8 @@ mkfifo ${BOT_NICK}.io
 tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while true ; do
 
     # # If log.out is empty, reset logging.  (cron job empties log.out after backup)
-    # LOG_FILE_1=/u/dkim/sandbox/_reminderbot/log.stdout
-    # LOG_FILE_2=/u/dkim/sandbox/_reminderbot/log.stderr
+    # LOG_FILE_1=${DIR}/log.stdout
+    # LOG_FILE_2=${DIR}/log.stderr
     # if [ ! -s ${LOG_FILE_1} ] && [ ! -s ${LOG_FILE_2} ] ; then
     #     exec > >(tee -a ${LOG_FILE_1} )
     #     exec 2> >(tee -a ${LOG_FILE_2} >&2)
@@ -92,15 +95,15 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
         started="yes"
     fi
 
-    while [ -z "${irc}" ] ; do                      # While loop is used to enable non-blocking I/O (read).
-        read -t 0.5 irc                             # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
+    while [ -z "${irc}" ] ; do                          # While loop is used to enable non-blocking I/O (read).
+        read -t 0.5 irc                                 # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
         if [ "$(echo $?)" == "1" ] ; then irc='' ; fi
 
         signalSubroutine
         cmdSubroutine
     done
 
-    # echo "==> $irc" >> irc-output.log               # Re-direct incoming internal irc msgs to file.
+    # echo "==> $irc" >> irc-output.log                 # Re-direct incoming internal irc msgs to file.
     echo "==> $irc"
     if $(echo "$irc" | cut -d ' ' -f 1 | grep -P "PING" > /dev/null) ; then
         send "PONG"
@@ -117,5 +120,5 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
         fi
     fi
 
-    irc=''                                          # Reset ${irc}.
+    irc=''                                              # Reset ${irc}.
 done
