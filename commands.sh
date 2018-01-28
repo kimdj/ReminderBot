@@ -763,7 +763,6 @@ elif has "${msg}" "^!signal " && [[ ${nick} = "__reminderbot" ]] || [[ ${nick} =
     payload=$(echo ${msg} | sed -r 's|!signal (.*)|\1|')
     task=$(echo ${payload} | sed -r 's|~.*||' | sed -r 's|[ ]*$||')
     time_sched=$(echo ${payload} | sed -r 's|.*~(.*)~.*~.*|\1|' | sed -r 's|^[ ]*||' | sed -r 's|[ \)]*$||')
-    # time_sched=$(date --date="${time_sched}" +"%a, %b %d %I:%M%P" | sed -r 's|(.*)0([0-9]{1})(.*)|\1\2\3|')  # THIS IS BUGGY...
     time_sched=$(date --date="${time_sched}" +"%a, %b %d %I:%M%P")
     chan=$(echo ${payload} | sed -r 's|^(.*) ~ (.*) ~ (.*)|\2|')
     nick=$(echo ${payload} | sed -r 's|^(.*) ~ (.*) ~ (.*) ~ (.*)|\4|')

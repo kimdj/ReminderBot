@@ -16,7 +16,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 LOG_FILE_1=${DIR}/log.stdout        # Redirect file descriptors 1 and 2 to log.out
 LOG_FILE_2=${DIR}/log.stderr
 exec > >(tee -a ${LOG_FILE_1} )
+PID_LOG_STDOUT=$(echo $!)
 exec 2> >(tee -a ${LOG_FILE_2} >&2)
+PID_LOG_STDERR=$(echo $!)
 
 BOT_NICK="_reminderbot"
 KEY="$(cat ./config.txt)"
@@ -91,8 +93,12 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
     LOG_FILE_1=${DIR}/log.stdout
     LOG_FILE_2=${DIR}/log.stderr
     if [ ! -s ${LOG_FILE_1} ] && [ ! -s ${LOG_FILE_2} ] ; then
+        if [ -z "$(ps --no-header ${PID_LOG_STDOUT})" ] ; then kill "${PID_LOG_STDOUT}" ; fi
+        if [ -z "$(ps --no-header ${PID_LOG_STDERR})" ] ; then kill "${PID_LOG_STDERR}" ; fi
         exec > >(tee -a ${LOG_FILE_1} )
+        PID_LOG_STDOUT=$(echo $!)
         exec 2> >(tee -a ${LOG_FILE_2} >&2)
+        PID_LOG_STDERR=$(echo $!)
     fi
 
     if [[ -z ${started} ]] ; then
@@ -101,8 +107,22 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
         started="yes"
     fi
 
-    while [ -z "${irc}" ] ; do                              # While loop is used to enable non-blocking I/O (read).
-        read -r -t 0.5 irc                                     # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
+    # If there's an incoming msg, assign it to ${irc} and break out of the loop.
+    # Otherwise, cronjob(s) are run and append reminders to a file called tmp:
+    #
+    # 00 13 22 01 * echo "d4da751e-446f-4f29-9248-1ca5f177f4a1: Sun Jan 21 16:38:02 PST 2018, #bingobobby, _sharp, do something"
+    # 00 12 22 01 * echo "de64569f-8027-4330-b5dc-6bbb636d0ba0: Sun Jan 21 16:39:03 PST 2018, #bots, _sharp, do something fun"
+    # 30 21 30 01 * echo "00e44e16-d33e-4448-b2ff-40f9dbebe82d: Sun Jan 21 19:34:28 PST 2018, _sharp, _sharp, to eat cereal"
+    #
+    # signalSubroutine will check for the existence of the tmp file.
+    # If it exists, then for each line, send a signal msg containing a reminder
+    # to _reminderbot and _reminderbot has a handler that essentially forwards
+    # the contents of the signal msg to the appropriate channel.
+    # 
+    # Finally, check to see if cmd file exists.  If so, execute the cmds.
+
+    while [ -z "${irc}" ] ; do                                  # While loop is used to enable non-blocking I/O (read).
+        read -r -t 0.5 irc                                      # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
         if [ "$(echo $?)" == "1" ] ; then irc='' ; fi
 
         signalSubroutine
