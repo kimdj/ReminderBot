@@ -133,8 +133,10 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
     echo "==> ${irc}"
     if $(echo "${irc}" | cut -d ' ' -f 1 | grep -P "PING" > /dev/null) ; then
         send "PONG"
-    elif $(echo "${irc}" | cut -d ' ' -f 2 | grep -P "PRIVMSG" > /dev/null) ; then 
-#:nick!user@host.cat.pdx.edu PRIVMSG #bots :This is what an IRC protocol PRIVMSG looks like!
+    elif $(echo "${irc}" | cut -d ' ' -f 1 | grep -P "ING" > /dev/null) ; then                          # NOTICE: very, very crude way of mitigating PING/PONG faulty handshake error.
+        send "PONG"                                                                                     #         i.e. _reminderbot will randomly receive an unexpected 'ING' instead of
+    elif $(echo "${irc}" | cut -d ' ' -f 2 | grep -P "PRIVMSG" > /dev/null) ; then                      #              the expected 'PING', and as a result it will not send back the
+#:nick!user@host.cat.pdx.edu PRIVMSG #bots :This is what an IRC protocol PRIVMSG looks like!            #              expected 'PONG' msg.
         nick="$(echo "${irc}" | cut -d ':' -f 2- | cut -d '!' -f 1)"
         chan="$(echo "${irc}" | cut -d ' ' -f 3)"
         if [ "${chan}" = "${BOT_NICK}" ] ; then chan="${nick}" ; fi 
