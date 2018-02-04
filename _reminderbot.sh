@@ -2,7 +2,7 @@
 # _reminderbot ~ main
 # Copyright (c) 2017 David Kim
 # This program is licensed under the "MIT License".
-# Date of inception: 1/14/17
+# Date of inception: 1/15/17
 
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
@@ -11,7 +11,7 @@ function ctrl_c() {
         echo "***** Trapped CTRL-C *****"
 }
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"     # Path to _reminderbot.
 
 LOG_FILE_1=${DIR}/log.stdout        # Redirect file descriptors 1 and 2 to log.out
 LOG_FILE_2=${DIR}/log.stderr
