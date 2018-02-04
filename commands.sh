@@ -256,7 +256,7 @@ function convertCronjobSubroutine {
 
     standard_time="$(date --date="${month}/${day_of_month}/$(date +%y) ${h}:${m}" +%I:%M%p\ on\ %A,\ %B\ %d)"           # Generate time in standard form.  (e.g. 05:00AM on Monday, January 22)
     standard_time="$(echo "${standard_time}" | sed -r 's|^0||' | sed -r 's|AM|am|' | sed -r 's|PM|pm|')"                # Format ${standard_time}.         (e.g. 5:00am on Monday, January 22)
-    standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's|1$|1st|' | sed -r 's|2$|2nd|' | sed -r 's|3$|3rd|')"              # (e.g. 5:00am on Monday, January 2nd)
+    standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's| 1$| 1st|' | sed -r 's| 2$| 2nd|' | sed -r 's| 3$| 3rd|' | sed -r 's| 21$| 21st|' | sed -r 's| 22$| 22nd|' | sed -r 's| 23$| 23rd|' | sed -r 's| 31$| 31st|')"              # (e.g. 5:00am on Monday, January 2nd)
     if [[ ! "${standard_time}" =~ *1st* ]] &&
        [[ ! "${standard_time}" =~ *2nd* ]] &&
        [[ ! "${standard_time}" =~ *3rd* ]] ; then
@@ -275,7 +275,7 @@ function convertCronjobSubroutine {
          [ ! $(echo ${day_of_week} | sed -r 's|fri(day)?||') ] ||
          [ ! $(echo ${day_of_week} | sed -r 's|sat(urday)?||') ] ; then
         standard_time=$(date --date="${day_of_week} ${h}:${m}" +%I:%M%p\ on\ %A,\ %B\ %d | sed -r 's|^0||' | sed -r 's|AM|am|' | sed -r 's|PM|pm|')         # Format ${standard_time}.
-        standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's|1$|1st|' | sed -r 's|2$|2nd|' | sed -r 's|3$|3rd|')"
+        standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's| 1$| 1st|' | sed -r 's| 2$| 2nd|' | sed -r 's| 3$| 3rd|' | sed -r 's| 21$| 21st|' | sed -r 's| 22$| 22nd|' | sed -r 's| 23$| 23rd|' | sed -r 's| 31$| 31st|')"
         if [[ ! "${standard_time}" =~ *1st* ]] &&
            [[ ! "${standard_time}" =~ *2nd* ]] &&
            [[ ! "${standard_time}" =~ *3rd* ]] ; then
@@ -558,7 +558,7 @@ function cronjobSubroutine {
         ${DEBUG} debugCronjobSubroutine "after sched: ${min}" "${hour}" "${day}" "${month}" "*" 2> /dev/null
 
         standard_time="$(date -d @${e_time} +%I:%M%p\ on\ %A,\ %B\ %d | sed -r 's|^0||' | sed -r 's|AM|am|' | sed -r 's|PM|pm|')"                               # 1:00pm on Sunday, February 4.
-        standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's|1$|1st|' | sed -r 's|2$|2nd|' | sed -r 's|3$|3rd|')"                 # 01 ==> 1, 1 ==> 1st, etc.
+        standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's| 1$| 1st|' | sed -r 's| 2$| 2nd|' | sed -r 's| 3$| 3rd|' | sed -r 's| 21$| 21st|' | sed -r 's| 22$| 22nd|' | sed -r 's| 23$| 23rd|' | sed -r 's| 31$| 31st|')"                 # 01 ==> 1, 1 ==> 1st, etc.
         if [[ ! "${standard_time}" =~ *1st* ]] &&
            [[ ! "${standard_time}" =~ *2nd* ]] &&
            [[ ! "${standard_time}" =~ *3rd* ]] ; then
@@ -647,7 +647,7 @@ function cronjobSubroutine {
         ${DEBUG} debugCronjobSubroutine "${min}" "${hour}" "${day}" "${month}" "*" 2> /dev/null
 
         standard_time="$(date -d @${e_time} +%I:%M%p\ on\ %A,\ %B\ %d | sed -r 's|^0||' | sed -r 's|AM|am|' | sed -r 's|PM|pm|')"                               # 1:00pm on Sunday, February 4.
-        standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's|1$|1st|' | sed -r 's|2$|2nd|' | sed -r 's|3$|3rd|')"                 # 01 ==> 1, 1 ==> 1st, etc.
+        standard_time="$(echo "${standard_time}" | sed -r 's|0([0-9]{1})$|\1|' | sed -r 's| 1$| 1st|' | sed -r 's| 2$| 2nd|' | sed -r 's| 3$| 3rd|' | sed -r 's| 21$| 21st|' | sed -r 's| 22$| 22nd|' | sed -r 's| 23$| 23rd|' | sed -r 's| 31$| 31st|')"                 # 01 ==> 1, 1 ==> 1st, etc.
         if [[ ! "${standard_time}" =~ *1st* ]] &&
            [[ ! "${standard_time}" =~ *2nd* ]] &&
            [[ ! "${standard_time}" =~ *3rd* ]] ; then
@@ -710,12 +710,22 @@ if has "${msg}" "^!_reminderbot$" || has "${msg}" "^_reminderbot: help$" ; then
 
 # Alive.
 
-elif has "${msg}" "^!alive(\?)?$" || has "${msg}" "^_reminderbot: alive(\?)?$" ; then
+elif has "${msg}" "^!alive(\?)?$" && [[ "${AUTHORIZED}" == *"${nick}"* ]] ; then
     str1='running! '
     str2=$(ps aux | grep ./_reminderbot | head -n 1 | awk '{ print "[%CPU "$3"]", "[%MEM "$4"]", "[VSZ "$5"]" }')
     str3=" [#REM $(crontab -l | tail -n +3 | wc -l)]"
     str4=" [SIZE $(ls -lash | head -n 1 | cut -d ' ' -f2-)]"
-    str="${str1}${str2}${str3}${str4}"
+    str5=" [TOT_SIZE $(du -sh | cut -f -1)]"
+    str="${str1}${str2}${str3}${str4}${str5}"
+    say ${chan} "${str}"
+
+elif has "${msg}" "^_reminderbot: alive(\?)?$" ; then
+    str1='running! '
+    str2=$(ps aux | grep ./_reminderbot | head -n 1 | awk '{ print "[%CPU "$3"]", "[%MEM "$4"]", "[VSZ "$5"]" }')
+    str3=" [#REM $(crontab -l | tail -n +3 | wc -l)]"
+    str4=" [SIZE $(ls -lash | head -n 1 | cut -d ' ' -f2-)]"
+    str5=" [TOT_SIZE $(du -sh | cut -f -1)]"
+    str="${str1}${str2}${str3}${str4}${str5}"
     say ${chan} "${str}"
 
 # Source.

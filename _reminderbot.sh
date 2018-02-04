@@ -121,7 +121,7 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
     # 
     # Finally, check to see if cmd file exists.  If so, execute the cmds.
 
-    while [ -z "${irc}" ] ; do                                  # While loop is used to enable non-blocking I/O (read).
+    while [ -z "${irc}" ] ; do                                  # While loop is used to effectively enable non-blocking I/O (read).  (i.e. without the while loop, thread of execution blocks at the read command)
         read -r -t 0.5 irc                                      # Time out and return failure if a complete line of input is not read within TIMEOUT seconds.
         if [ "$(echo $?)" == "1" ] ; then irc='' ; fi
 
