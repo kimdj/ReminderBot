@@ -704,10 +704,10 @@ function cronjobSubroutine {
 function helpSubroutine {
     say ${chan} "${nick}: I will remind you of stuff!  DISCLAIMER: I am not liable for your forgetfulness."
     say ${chan} 'usage: remind me in 3d2h1m ... | remind me in 1m2h1d ... | remind me in 1d ...'
-    say ${chan} '       remind me in 5 days 4 hours 3 minutes ... | remind me in 2 hrs 3 mins ...'
-    say ${chan} '       remind me on sun at 1705 ... | remind me at 3:00pm on 8/8/18 ...'
-    say ${chan} '       remind me at 23:59 on 9-9-18 ... | remind me on 3/13/18 at 12pm ...'
-    say ${chan} '       remind me tomorrow ... | remind me tmrw at 6 ...'
+    say ${chan} '   ... remind me in 5 days 4 hours 3 minutes ... | remind me in 2 hrs 3 mins ...'
+    say ${chan} '   ... remind me on sun at 1705 ... | remind me at 3:00pm on 8/8/18 ...'
+    say ${chan} '   ... remind me at 23:59 on 9-9-18 ... | remind me on 3/13/18 at 12pm ...'
+    say ${chan} '   ... remind me tomorrow ... | remind me tmrw at 6 ...'
 }
 
 ################################################  Subroutines End  ################################################
