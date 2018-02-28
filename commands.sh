@@ -296,7 +296,7 @@ function convertCronjobSubroutine {
            [[ ! "${standard_time}" =~ *3rd* ]] ; then
             standard_time="$(echo "${standard_time}" | sed -r 's|([0-9]{1})$|\1th|')"
         fi
-    elif [ "${day_of_week}" -ge 0 -a "${day_of_week}" -le 6 ] ; then
+    elif [ "${day_of_week}" -ge "0" ] && [ "${day_of_week}" -le "6" ] ; then
         true
     else
         return 1
@@ -699,6 +699,47 @@ function cronjobSubroutine {
     fi
 }
 
+# This subroutine lists reminders for a individual user.  (NOTE: its sent as a privmsg)
+
+function listSubroutine {
+    crontab -l | grep "${nick}," > list.tmp
+    if [ -s list.tmp ] ; then
+        while read -r line ; do
+            schedule=$(echo ${line} | sed -r 's/^([0-9\*]+ [0-9\*]+ [0-9\*]+ [0-9\*]+ [sundaymotewhrfi0-9\*]+).*/\1/')
+            convertCronjobSubroutine "${schedule}"
+            reminder=$(echo ${line} | sed -r "s/.*${nick}, (.*)\" >>.*/\1/")
+            uuid=$(echo ${line} | sed -r "s/.*echo \"([a-z0-9-]+): .*/\1/")
+            say ${nick} "You will be reminded ${reminder} @ ${converted_cronjob} (${uuid})."
+        done < list.tmp
+    else
+        say ${chan} "You have no reminders scheduled."
+    fi
+
+    rm list.tmp
+}
+
+# This subroutine removes a reminder by uuid.
+
+function removeSubroutine {
+    uuid=${1}
+    if [ -z $(echo -n ${uuid} | sed -r "s/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}//") ] ; then         # Make sure the payload is a valid uuid.
+        payload=$(crontab -l | grep "${uuid}")
+        if [ -z "${payload}" ] ; then
+            say ${nick} "Reminder was not found."
+        else
+            # uuid=$(echo ${payload} | sed -r "s/.*echo \"([a-z0-9-]+): .*/\1/")
+            reminder=$(echo ${payload} | sed -r "s/^.*, .*, .*, (.*)\" >>.*/\1/")
+            schedule=$(echo ${payload} | sed -r 's/^([0-9\*]+ [0-9\*]+ [0-9\*]+ [0-9\*]+ [sundaymotewhrfi0-9\*]+).*/\1/')
+            convertCronjobSubroutine "${schedule}"
+            say ${nick} "You will no longer be reminded ${reminder} @ ${converted_cronjob}."
+        fi
+
+        crontab -l | grep -v "${uuid}" | crontab -
+    else
+        say ${nick} "Reminder was not found."
+    fi
+}
+
 # This subroutine displays documentation for _reminderbot's functionalities.
 
 function helpSubroutine {
@@ -781,6 +822,22 @@ elif has "${msg}" "^remind " ; then
 
     cronjobSubroutine "${payload}" "${recipient}"
     if [ "$(echo $?)" == "1" ] ; then say ${chan} "Sorry, I couldn't setup your reminder." ; fi             # Case: error within cronjobSubroutine.
+
+# List current reminders help function.
+
+elif has "${msg}" "^!r((em(inder)?)s?)?$" ; then
+    say ${chan} "usage: !reminders [-l | -d $(cat /proc/sys/kernel/random/uuid)]"
+
+# List current reminders.
+
+elif has "${msg}" "^!r((em(inder)?)s?)? -l$" ; then
+    listSubroutine
+
+# Remove a reminder based on uuid.
+
+elif has "${msg}" "^!r((em(inder)?)s?)? -d " ; then
+    uuid=$(echo ${msg} | sed -r 's/^![remindrs]+ -d //')
+    removeSubroutine "${uuid}"
 
 # Handle incoming msg from self (_reminderbot => _reminderbot).
 
