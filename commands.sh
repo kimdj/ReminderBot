@@ -791,7 +791,7 @@ elif has "${msg}" "^_reminderbot: source$" ; then
 
 # Handle a reminder request.
 
-elif has "${msg}" "^remind me " ; then
+elif has "${msg,,}" "^remind me " ; then
     cronjob_len=$(crontab -l | wc -l)                                                                       # Get the current number of cronjobs.
     if [ "${cronjob_len}" -gt "${MAX_REM}" ] ; then                                                         # Max reminders.
         say ${chan} "YAY!!! You have officially reached the self-imposed maximum number of reminders (i.e. MAX=${MAX_REM})."
@@ -799,7 +799,7 @@ elif has "${msg}" "^remind me " ; then
         return 1
     fi
 
-    payload=$(echo ${msg} | sed -r 's/^remind me //')                                                       # Remove 'remind me '.
+    payload=$(echo ${msg} | sed -r 's/^[rR][eE][mM][iI][nN][dD] [mM][eE] //')                                                       # Remove 'remind me '.
     payload=$(echo ${payload} | sed -r 's|[^ a-zA-Z0-9:/-]||g' | sed 's/>//g' | sed 's/<//g')               # Sanitize user input (i.e. remove non-alphanumeric characters).
 
     cronjobSubroutine "${payload}" "NONE"
@@ -807,7 +807,7 @@ elif has "${msg}" "^remind me " ; then
 
 # Handle a reminder request on behalf of another user.
 
-elif has "${msg}" "^remind " ; then
+elif has "${msg,,}" "^remind " ; then
     cronjob_len=$(crontab -l | wc -l)                                                                       # Get the current number of cronjobs.
     if [ "${cronjob_len}" -gt "${MAX_REM}" ] ; then                                                         # Max reminders.
         say ${chan} "YAY!!! You have officially reached the self-imposed maximum number of reminders (i.e. MAX=${MAX_REM})."
@@ -815,7 +815,7 @@ elif has "${msg}" "^remind " ; then
         return 1
     fi
 
-    payload=$(echo ${msg} | sed -r 's/^remind //')                                                          # Remove 'remind me '.
+    payload=$(echo ${msg} | sed -r 's/^[rR][eE][mM][iI][nN][dD] //')                                                          # Remove 'remind me '.
     recipient=$(echo ${payload} | sed -r 's/ .*//')                                                         # Get the recipient's nick.
     payload=$(echo ${payload} | cut -d' ' -f2-)
     payload=$(echo ${payload} | sed -r 's|[^ a-zA-Z0-9:/-]||g' | sed 's/>//g' | sed 's/<//g')               # Sanitize user input (i.e. remove non-alphanumeric characters).
@@ -825,18 +825,18 @@ elif has "${msg}" "^remind " ; then
 
 # List current reminders help function.
 
-elif has "${msg}" "^!r((em(inder)?)s?)?$" ; then
+elif has "${msg,,}" "^!r((em(inder)?)s?)?$" ; then
     say ${chan} "usage: !reminders [-l | -d $(cat /proc/sys/kernel/random/uuid)]"
 
 # List current reminders.
 
-elif has "${msg}" "^!r((em(inder)?)s?)? -l$" ; then
+elif has "${msg,,}" "^!r((em(inder)?)s?)? -l$" ; then
     listSubroutine
 
 # Remove a reminder based on uuid.
 
-elif has "${msg}" "^!r((em(inder)?)s?)? -d " ; then
-    uuid=$(echo ${msg} | sed -r 's/^![remindrs]+ -d //')
+elif has "${msg,,}" "^!r((em(inder)?)s?)? -d " ; then
+    uuid=$(echo ${msg,,} | sed -r 's/^![remindrs]+ -d //')
     removeSubroutine "${uuid}"
 
 # Handle incoming msg from self (_reminderbot => _reminderbot).
