@@ -1,5 +1,5 @@
 #!/bin/bash
-# _reminderbot ~ main
+# ReminderBot ~ main
 # Copyright (c) 2017 David Kim
 # This program is licensed under the "MIT License".
 # Date of inception: 1/15/17
@@ -11,7 +11,7 @@ function ctrl_c() {
         echo "***** Trapped CTRL-C *****"
 }
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"     # Path to _reminderbot.
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"     # Path to ReminderBot.
 
 LOG_FILE_1=${DIR}/log.stdout        # Redirect file descriptors 1 and 2 to log.out
 LOG_FILE_2=${DIR}/log.stderr
@@ -20,7 +20,7 @@ PID_LOG_STDOUT=$(echo $!)
 exec 2> >(tee -a ${LOG_FILE_2} >&2)
 PID_LOG_STDERR=$(echo $!)
 
-BOT_NICK="_reminderbot"
+BOT_NICK="ReminderBot"
 KEY="$(cat ./config.txt)"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -42,7 +42,7 @@ function send {
     done <<< "$1"
 }
 
-# This subroutine checks for a file called tmp in ../tasks/ and sends the content as a signal msg to _reminderbot.
+# This subroutine checks for a file called tmp in ../tasks/ and sends the content as a signal msg to ReminderBot.
 
 function signalSubroutine {
     if [ -e tasks/tmp ] ; then                  # If tasks/tmp exists, send file contents !signal handler.  Then, remove tasks/tmp.
@@ -63,7 +63,7 @@ function signalSubroutine {
 
             payload="!signal ${s_task} ~ ${s_time_sched}) ~ ${s_chan} ~ ${s_nick}"
 
-            send "PRIVMSG _reminderbot :${payload}"
+            send "PRIVMSG ReminderBot :${payload}"
             crontab -l | grep -v "${s_uuid}" | crontab -              # Remove the cronjob by grep-ing out the specified cronjob uuid.
         done < tasks/tmp
 
@@ -116,7 +116,7 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
     #
     # signalSubroutine will check for the existence of the tmp file.
     # If it exists, then for each line, send a signal msg containing a reminder
-    # to _reminderbot and _reminderbot has a handler that essentially forwards
+    # to ReminderBot and ReminderBot has a handler that essentially forwards
     # the contents of the signal msg to the appropriate channel.
     # 
     # Finally, check to see if cmd file exists.  If so, execute the cmds.
@@ -134,9 +134,9 @@ tail -f ${BOT_NICK}.io | openssl s_client -connect irc.cat.pdx.edu:6697 | while 
     if $(echo "${irc}" | cut -d ' ' -f 1 | grep -P "PING" > /dev/null) ; then
         send "PONG"
     elif $(echo "${irc}" | cut -d ' ' -f 1 | grep -P "ING" > /dev/null) ; then                          # NOTICE: very, very crude way of mitigating PING/PONG faulty handshake error.
-        send "PONG"                                                                                     #         i.e. _reminderbot will randomly receive an unexpected 'ING' instead of
+        send "PONG"                                                                                     #         i.e. ReminderBot will randomly receive an unexpected 'ING' instead of
     elif $(echo "${irc}" | cut -d ' ' -f 2 | grep -P "PRIVMSG" > /dev/null) ; then                      #              the expected 'PING', and as a result it will not send back the
-#:nick!user@host.cat.pdx.edu PRIVMSG #bots :This is what an IRC protocol PRIVMSG looks like!            #              expected 'PONG' msg.
+#:nick!user@host.com PRIVMSG #chan :This is what an IRC protocol PRIVMSG looks like!                    #              expected 'PONG' msg.
         nick="$(echo "${irc}" | cut -d ':' -f 2- | cut -d '!' -f 1)"
         chan="$(echo "${irc}" | cut -d ' ' -f 3)"
         if [ "${chan}" = "${BOT_NICK}" ] ; then chan="${nick}" ; fi 
